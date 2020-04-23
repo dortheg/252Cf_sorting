@@ -43,6 +43,19 @@ protected:
     void CreateSpectra();
 
 private:
+
+    // Enum describing the 'prompt' status of a gamma-ray
+    typedef enum {
+        is_prompt,          //!< To indicate that the hit is within the 'prompt' window.
+        is_background,      //!< To indicate that the hit is within the 'background' window.
+        ignore              //!< To indicate that the hit is neither in the 'prompt' nor the 'background window.
+    } prompt_status_t;
+
+    // Method to check if the time is within a gate.
+    prompt_status_t CheckTimeStatus(const double &time,         /*!< Time of the hit        */
+                                    const Parameter &paramter   /*!< Gates of the detector  */) const;
+
+
     // Method to give names to some paramters
     void NameTimeParameters();
 
@@ -52,23 +65,9 @@ private:
     // Method for getting time difference between two words.
     double CalcTimediff(const word_t &start, const word_t &stop) const;
 
-    Histogram1Dp energy_labr_raw[NUM_LABR_DETECTORS], energy_labr[NUM_LABR_DETECTORS];
-    Histogram1Dp energy_dE_raw[NUM_SI_DE_DET], energy_dE[NUM_SI_DE_DET];
-    Histogram1Dp energy_E_raw[NUM_SI_E_DET], energy_E[NUM_SI_E_DET];
-    Histogram2Dp time_e_de[NUM_SI_E_DET];
+    Histogram1Dp energy_labr_raw[NUM_LABR_DETECTORS], energy_labr[NUM_LABR_DETECTORS], energy_labr_fission, energy_labr_fission_bg, energy_labr_fission_all;
 
-    Histogram1Dp time_labr[NUM_LABR_DETECTORS];
-    Histogram2Dp time_labr_all;
-    // Histogram2Dp time_ppac_labr[NUM_PPAC], time_de_labr[NUM_SI_DE_DET];
-    Histogram2Dp time_ppac_labr[NUM_PPAC];
-
-    Histogram2Dp time_energy_labr;
-
-    // DE - E spectra (everything in same...)
-    Histogram2Dp ede_all, ede_raw[NUM_SI_E_DET][NUM_SI_RINGS], ede[NUM_SI_E_DET][NUM_SI_RINGS];
-    Histogram2Dp ede_thick; // gated on the apparent thickness
-    Histogram1Dp h_ede[NUM_SI_E_DET][NUM_SI_RINGS], h_ede_r[NUM_SI_RINGS], h_ex_r[NUM_SI_RINGS];
-    Histogram1Dp h_ede_all, h_thick;
+    Histogram2Dp energy_labr_all, time_labr_all;
 
     // Particle gated E-DE
     Histogram2Dp ede_gate;
@@ -77,7 +76,7 @@ private:
     Histogram1Dp h_ex;
 
     // Particle - gamma-ray coincidence matrix
-    Histogram2Dp alfna, alfna_bg;
+    Histogram2Dp exgam_ppac, exgam_ppac_bg, exgam_ppac_all; // gated on ppacs
 
     // Gain labr
     Parameter gain_labr;
@@ -108,6 +107,8 @@ private:
 
     // Time alignment PPACs
     Parameter shift_time_ppac;
+    Histogram2Dp ppac_align_time, labr_align_time;   // LaBr 0 as start and PPAC as stop. For aligning the PPACs.
+
 
     // Coefficients of 2nd order Polynomial to calculate excitation energy from SiRi energy (E+dE).
     Parameter ex_from_ede;
@@ -127,7 +128,7 @@ private:
     double higher_bg;
     };
 
-    // Time gates for the NaI detectors, e.g. for making the ALFNA matrices
+    // Time gates for the NaI detectors, e.g. for making the exgam matrices
     Parameter labr_time_cuts;
     TimeGate labr_time_cut;
 
@@ -136,7 +137,7 @@ private:
     TimeGate ppac_time_cut;
 
 
-    int n_fail_de, n_fail_e;
+    int n_fail_de, n_fail_e, n_fission, n_gamma, n_gamma_fiss;
 
 
 };
