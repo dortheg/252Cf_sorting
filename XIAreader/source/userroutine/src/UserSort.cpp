@@ -261,7 +261,7 @@ void UserSort::CreateSpectra()
 
     sprintf(tmp, "labr_align_time");
     sprintf(tmp2, "t_{LaBr} - t_{PPAC nr. 1}");
-    ppac_align_time = Mat(tmp, tmp2, 9000, -1500, 1500, "t_{LaBr} - t_{PPAC nr. 1} [ns]", NUM_LABR_DETECTORS, 0, NUM_LABR_DETECTORS, "LaBr id.");
+    labr_align_time = Mat(tmp, tmp2, 9000, -1500, 1500, "t_{LaBr} - t_{PPAC nr. 1} [ns]", NUM_LABR_DETECTORS, 0, NUM_LABR_DETECTORS, "LaBr id.");
 
     sprintf(tmp, "exgam_ppac_all");
     exgam_ppac_all = Mat(tmp, tmp, 1500, 0, 15000, "LaBr [keV]", 1100, -1000, 15000, "Ex [keV]");
@@ -321,6 +321,12 @@ bool UserSort::Sort(const Event &event)
 
                     tdiff_ppac_labr = CalcTimediff(event.w_ppac[k][l], event.w_labr[i][j]);
 
+                    if(i==0){
+                        ppac_align_time->Fill(tdiff_ppac_labr,k);
+                    }
+
+                    labr_align_time->Fill(tdiff_ppac_labr,i);
+
                     switch ( CheckTimeStatus(tdiff_ppac_labr, ppac_time_cuts) ) {
                         case is_prompt : {
                             energy_labr_fission->Fill(labr_energy);
@@ -336,6 +342,7 @@ bool UserSort::Sort(const Event &event)
                             energy_labr_fission_bg->Fill(labr_energy);
                             exgam_ppac->Fill(labr_energy,1000,-1);
                             exgam_ppac_bg->Fill(labr_energy,1000);
+
                             break;
                         }
 
