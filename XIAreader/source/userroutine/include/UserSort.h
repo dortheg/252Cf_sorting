@@ -67,7 +67,11 @@ private:
 
     Histogram1Dp energy_labr_raw[NUM_LABR_DETECTORS], energy_labr[NUM_LABR_DETECTORS], energy_labr_fission, energy_labr_fission_bg, energy_labr_fission_all;
 
+    Histogram1Dp energy_labr_9_fission;
+
     Histogram2Dp energy_labr_all, time_labr_all;
+
+    Histogram2Dp time_energy_labr;
 
     // Particle gated E-DE
     Histogram2Dp ede_gate;
