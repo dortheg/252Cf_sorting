@@ -85,7 +85,7 @@ double XIA_time_in_ns_500MHz(int64_t timestamp, uint16_t CFDvalue)
     char fail;
 
 	correction = XIA_CFD_Fraction_500MHz(CFDvalue, &fail);
-	correction = fail ? 2.0*(7.*(double)rand()/RAND_MAX - 1) : correction;
+    correction = fail ? 2.0*(7.*(double)rand()/RAND_MAX - 1) : correction; //syntax: condition ? result_if_true : result_if_false
 
 	time_in_ns = 10.0*(double)timestamp;
 	time_in_ns = time_in_ns + correction;

@@ -67,8 +67,8 @@ static bool set_gainshift(Parameters& parameters, std::istream& ipar)
     bool p2 = set_par(parameters, ipar, "shift_labr",   NUM_LABR_DETECTORS );
     bool p3 = set_par(parameters, ipar, "gain_de", NUM_SI_DE_DET );
     bool p4 = set_par(parameters, ipar, "shift_de", NUM_SI_DE_DET );
-    bool p5 = set_par(parameters, ipar, "gain_e", NUM_SI_E_DET );
-    bool p6 = set_par(parameters, ipar, "shift_e", NUM_SI_E_DET );
+    bool p5 = set_par(parameters, ipar, "gain_e", NUM_SI_DE_DET );
+    bool p6 = set_par(parameters, ipar, "shift_e", NUM_SI_DE_DET );
     bool p7 = set_par(parameters, ipar, "shift_time_labr", NUM_LABR_DETECTORS );
     bool p8 = set_par(parameters, ipar, "shift_time_de", NUM_SI_DE_DET );
     bool p9 = set_par(parameters, ipar, "shift_time_e", NUM_SI_E_DET );
@@ -81,8 +81,8 @@ UserSort::UserSort()
     , shift_labr( GetParameters(), "shift_labr", NUM_LABR_DETECTORS, 0)
     , gain_dE( GetParameters(), "gain_de", NUM_SI_DE_DET, 1)
     , shift_dE( GetParameters(), "shift_de", NUM_SI_DE_DET, 0)
-    , gain_E( GetParameters(), "gain_e", NUM_SI_E_DET, 1)
-    , shift_E( GetParameters(), "shift_e", NUM_SI_E_DET, 0)
+    , gain_E( GetParameters(), "gain_e", NUM_SI_DE_DET, 1)
+    , shift_E( GetParameters(), "shift_e", NUM_SI_DE_DET, 0)
     , shift_time_labr( GetParameters(), "shift_time_labr", NUM_LABR_DETECTORS, 0)
     , shift_time_de( GetParameters(), "shift_time_de", NUM_SI_DE_DET, 0)
     , shift_time_e( GetParameters(), "shift_time_e", NUM_SI_E_DET, 0)
@@ -281,13 +281,15 @@ void UserSort::CreateSpectra()
     sprintf(tmp, "energy_labr_fission_all");
     energy_labr_fission_all = Spec(tmp, tmp, 10000, 0, 10000, "Energy [keV]");
 
+    sprintf(tmp, "energy_labr_fission_vbw");
+    energy_labr_fission = Spec(tmp, tmp, 10000, 0, 10000, "Energy [keV]");
 
     sprintf(tmp, "energy_labr_9_fission");
     energy_labr_9_fission = Spec(tmp, tmp, 10000, 0, 10000, "Energy [keV]");
 
     sprintf(tmp, "time_energy_labr");
     sprintf(tmp2, "t_{LaBr} - t_{PPAC, any} : E_{LaBr}");
-    time_energy_labr = Mat(tmp, tmp2, 2000, -50, 50, "t_{LaBr} - t_{PPAC} [ns]", 5000, 0, 10000, "Energy LaBr [keV]");
+    time_energy_labr = Mat(tmp, tmp2, 2000, -50, 150, "t_{LaBr} - t_{PPAC} [ns]", 2000, 0, 10000, "Energy LaBr [keV]");
 
     n_fail_e = 0;
     n_fail_de = 0;
