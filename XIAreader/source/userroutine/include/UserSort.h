@@ -67,7 +67,7 @@ private:
 
     Histogram1Dp energy_labr_raw[NUM_LABR_DETECTORS], energy_labr[NUM_LABR_DETECTORS], energy_labr_fission, energy_labr_fission_bg, energy_labr_fission_all;
 
-    Histogram1Dp energy_labr_9_fission;
+    Histogram1Dp energy_labr_fission_veto_cfdfail_labr, energy_labr_fission_veto_satellite, energy_labr_fission_veto_cfdfail_labr_veto_satellite;
 
     Histogram1Dp time_gamma_gamma, time_gamma_gamma_veto_cfdfail_labr, time_gamma_gamma_veto_satellite, time_gamma_gamma_veto_cfdfail_labr_veto_satellite;
 
@@ -146,7 +146,8 @@ private:
     Parameter satellite_time_cuts;
     TimeGate satellite_time_cut;
 
-    int n_fail_de, n_fail_e, n_fission, n_gamma, n_gamma_fiss, n_cfdfail_labr;
+    int n_fail_de, n_fail_e, n_gamma, n_gamma_fiss, n_cfdfail_labr;
+    int n_fission, n_fission_veto_cfdfail_labr, n_fission_veto_satellite, n_fission_veto_cfdfail_labr_veto_satellite;
 
 
 };

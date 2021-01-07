@@ -141,3 +141,28 @@ CMakeLists.txt.user*
 
 .DS_Store
 .DS_Store?
+
+#Other files Dorthea don't want included
+*.pdf
+*.csv
+*.ods
+SPEC
+*.hist
+*.un
+*.un1
+*.unf
+*.pcm
+
+build_XIAreader_Fabio/
+data/
+output_files/__pycache__/
+output_files/resp.dat
+
+input_files/28Si_test_Sort.batch
+input_files/60Co.batch
+input_files/gain_shift1.dat
+input_files/gain_shift_28Si.dat
+input_files/gain_shift_Friday6April.dat
+input_files/gain_shift_mostPlain.dat
+input_files/total_gain_shift_20180416_142401.dat
+
