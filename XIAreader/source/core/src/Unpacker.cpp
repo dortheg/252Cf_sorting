@@ -118,7 +118,7 @@ bool Unpacker::UnpackOneEvent(Event& event, int& n_data)
     for (int i =  curr_Buf ; i < buffer->GetSize() ; ++i){
         cWord = (*buffer)[i];
         //Here the sorting say it needs fission tag!
-        if (GetDetector(cWord.address).type == ppac){ //ppac if fission tag, labr if 60Co source
+        if (GetDetector(cWord.address).type == labr){ //ppac if fission tag, labr if 60Co source
             int start = i;
             int stop = i+1;
 

@@ -69,6 +69,8 @@ private:
 
     Histogram1Dp energy_labr_9_fission;
 
+    Histogram1Dp time_gamma_gamma, time_gamma_gamma_veto_cfdfail_labr;
+
     Histogram2Dp energy_labr_all, time_labr_all;
 
     Histogram2Dp time_energy_labr;
@@ -141,7 +143,7 @@ private:
     TimeGate ppac_time_cut;
 
 
-    int n_fail_de, n_fail_e, n_fission, n_gamma, n_gamma_fiss;
+    int n_fail_de, n_fail_e, n_fission, n_gamma, n_gamma_fiss, n_cfdfail_labr;
 
 
 };

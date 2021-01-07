@@ -287,12 +287,19 @@ void UserSort::CreateSpectra()
     sprintf(tmp, "energy_labr_9_fission");
     energy_labr_9_fission = Spec(tmp, tmp, 10000, 0, 10000, "Energy [keV]");
 
+    sprintf(tmp, "time_gamma_gamma");
+    time_gamma_gamma = Spec(tmp, tmp, 1000, -150, 150, "tdiff [ns]");
+
+    sprintf(tmp, "time_gamma_gamma_veto_cfdfail_labr");
+    time_gamma_gamma_veto_cfdfail_labr = Spec(tmp, tmp, 1000, -150, 150, "tdiff [ns]");
+
     sprintf(tmp, "time_energy_labr");
     sprintf(tmp2, "t_{LaBr} - t_{PPAC, any} : E_{LaBr}");
     time_energy_labr = Mat(tmp, tmp2, 2000, -50, 150, "t_{LaBr} - t_{PPAC} [ns]", 2000, 0, 10000, "Energy LaBr [keV]");
 
     n_fail_e = 0;
     n_fail_de = 0;
+    n_cfdfail_labr = 0;
     n_fission = 0;
     n_gamma = 0;
     n_gamma_fiss = 0;
@@ -301,11 +308,23 @@ void UserSort::CreateSpectra()
 
 bool UserSort::Sort(const Event &event)
 {
-    int i, j;
-    double energy;
+    int i, j, k, l;
+    double energy, energy_2;
     double tdiff_ppac_labr;
+    double tdiff_gamma_gamma;
 
     NameTimeParameters();
+
+    bool CFD_fail_labr = false;
+
+    for ( i = 0 ; i < NUM_LABR_DETECTORS ; ++i ){
+        for ( j = 0 ; j < event.n_labr[i] ; ++j ){
+            n_cfdfail_labr += event.w_labr[i][j].cfdfail;
+            if(event.w_labr[i][j].cfdfail > 0)
+                CFD_fail_labr = true;
+        }
+    }
+
 
     for ( i = 0 ; i < NUM_LABR_DETECTORS ; ++i ){
         for ( j = 0 ; j < event.n_labr[i] ; ++j ){
@@ -315,6 +334,23 @@ bool UserSort::Sort(const Event &event)
             energy_labr[i]->Fill(energy);
             energy_labr_all->Fill(energy,i);
             n_gamma += 1;
+
+            for ( k = 0 ; k < NUM_LABR_DETECTORS ; ++k ){
+                for ( l = 0 ; l < event.n_labr[k] ; ++l ){
+
+                    if(k!=i && j!=l){
+                        energy_2 = CalibrateE(event.w_labr[k][l]);
+                        tdiff_gamma_gamma = CalcTimediff(event.w_labr[k][l], event.w_labr[i][j]);
+
+                        time_gamma_gamma->Fill(tdiff_gamma_gamma);
+
+                        if(CFD_fail_labr == false){
+                            time_gamma_gamma_veto_cfdfail_labr->Fill(tdiff_gamma_gamma);
+                        }
+                    }
+
+                }
+            }
         }
 
     }
@@ -394,6 +430,7 @@ bool UserSort::End()
 {
     std::cout << "CFD fails in E - detectors: " << n_fail_e << std::endl;
     std::cout << "CFD fails in dE - detectors: " << n_fail_de << std::endl;
+    std::cout << "CFD fails in LaBr: " << n_cfdfail_labr << std::endl;
     std::cout << "nfissions: " << n_fission << std::endl;
     std::cout << "ngamma: " << n_gamma << std::endl;
     std::cout << "ngammafiss: " << n_gamma_fiss << std::endl;
