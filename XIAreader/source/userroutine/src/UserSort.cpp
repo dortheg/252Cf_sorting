@@ -92,6 +92,7 @@ UserSort::UserSort()
     , thick_range    ( GetParameters(), "thick_range", 2      )
     , labr_time_cuts  ( GetParameters(), "labr_time_cuts", 2*2  )
     , ppac_time_cuts ( GetParameters(), "ppac_time_cuts", 2*2 )
+    , satellite_time_cuts (GetParameters(), "satellite_time_cuts", 2*2)
 {
 }
 
@@ -106,6 +107,11 @@ ppac_time_cut.lower_prompt = ppac_time_cuts[0];
 ppac_time_cut.higher_prompt = ppac_time_cuts[1];
 ppac_time_cut.lower_bg = ppac_time_cuts[2];
 ppac_time_cut.higher_bg = ppac_time_cuts[3];
+
+satellite_time_cut.lower_prompt = satellite_time_cuts[0];
+satellite_time_cut.higher_prompt = satellite_time_cuts[1];
+satellite_time_cut.lower_bg = satellite_time_cuts[2];
+satellite_time_cut.higher_bg = satellite_time_cuts[3];
  }
 
 double UserSort::CalibrateE(const word_t &w) const
@@ -293,6 +299,13 @@ void UserSort::CreateSpectra()
     sprintf(tmp, "time_gamma_gamma_veto_cfdfail_labr");
     time_gamma_gamma_veto_cfdfail_labr = Spec(tmp, tmp, 1000, -150, 150, "tdiff [ns]");
 
+    sprintf(tmp, "time_gamma_gamma_veto_satellite");
+    time_gamma_gamma_veto_satellite = Spec(tmp, tmp, 1000, -150, 150, "tdiff [ns]");
+
+    sprintf(tmp, "time_gamma_gamma_veto_cfdfail_labr_veto_satellite");
+    time_gamma_gamma_veto_cfdfail_labr_veto_satellite = Spec(tmp, tmp, 1000, -150, 150, "tdiff [ns]");
+
+
     sprintf(tmp, "time_energy_labr");
     sprintf(tmp2, "t_{LaBr} - t_{PPAC, any} : E_{LaBr}");
     time_energy_labr = Mat(tmp, tmp2, 2000, -50, 150, "t_{LaBr} - t_{PPAC} [ns]", 2000, 0, 10000, "Energy LaBr [keV]");
@@ -315,8 +328,9 @@ bool UserSort::Sort(const Event &event)
 
     NameTimeParameters();
 
+    //Test to see if any of the LaBr in the event are associated with CFDfail; if so, set CFD_fail_labr to true
+    // Will be used later to avoid CFD_fail events
     bool CFD_fail_labr = false;
-
     for ( i = 0 ; i < NUM_LABR_DETECTORS ; ++i ){
         for ( j = 0 ; j < event.n_labr[i] ; ++j ){
             n_cfdfail_labr += event.w_labr[i][j].cfdfail;
@@ -325,6 +339,40 @@ bool UserSort::Sort(const Event &event)
         }
     }
 
+    ///////////////////////////////////////////////////////////////
+    ///                Gamma-gamma coincidence                  ///
+    ///////////////////////////////////////////////////////////////
+
+    bool satellite_gamma_gamma = false;
+
+    for ( i = 0 ; i < NUM_LABR_DETECTORS ; ++i ){
+        for ( j = 0 ; j < event.n_labr[i] ; ++j ){
+
+            for ( k = 0 ; k < NUM_LABR_DETECTORS ; ++k ){
+                for ( l = 0 ; l < event.n_labr[k] ; ++l ){
+
+                    if(k!=i && j!=l){
+
+                        tdiff_gamma_gamma = CalcTimediff(event.w_labr[k][l], event.w_labr[i][j]);
+
+                        switch ( CheckTimeStatus(tdiff_gamma_gamma, satellite_time_cuts) ) {
+                            case is_prompt: {
+                                satellite_gamma_gamma = true;
+                            }
+
+                            case is_background: {
+                                satellite_gamma_gamma = true;
+                            }
+
+                            case ignore :{
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     for ( i = 0 ; i < NUM_LABR_DETECTORS ; ++i ){
         for ( j = 0 ; j < event.n_labr[i] ; ++j ){
@@ -347,13 +395,23 @@ bool UserSort::Sort(const Event &event)
                         if(CFD_fail_labr == false){
                             time_gamma_gamma_veto_cfdfail_labr->Fill(tdiff_gamma_gamma);
                         }
-                    }
 
+                        if(satellite_gamma_gamma==false){
+                            time_gamma_gamma_veto_satellite->Fill(tdiff_gamma_gamma);
+                        }
+
+                        if(CFD_fail_labr == false && satellite_gamma_gamma==false){
+                            time_gamma_gamma_veto_cfdfail_labr_veto_satellite->Fill(tdiff_gamma_gamma);
+                        }
+                    }
                 }
             }
         }
-
     }
+
+    ///////////////////////////////////////////////////////////////
+    ///                 PPAC-gamma coincidence                  ///
+    ///////////////////////////////////////////////////////////////
 
     for (int k = 0 ; k < NUM_PPAC ; ++k){
         for (int l = 0 ; l < event.n_ppac[k] ; ++l){
@@ -407,7 +465,6 @@ bool UserSort::Sort(const Event &event)
                             break;
                         }
                     }
-
                 }
             }
         }

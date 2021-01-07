@@ -69,7 +69,7 @@ private:
 
     Histogram1Dp energy_labr_9_fission;
 
-    Histogram1Dp time_gamma_gamma, time_gamma_gamma_veto_cfdfail_labr;
+    Histogram1Dp time_gamma_gamma, time_gamma_gamma_veto_cfdfail_labr, time_gamma_gamma_veto_satellite, time_gamma_gamma_veto_cfdfail_labr_veto_satellite;
 
     Histogram2Dp energy_labr_all, time_labr_all;
 
@@ -142,6 +142,9 @@ private:
     Parameter ppac_time_cuts;
     TimeGate ppac_time_cut;
 
+    //Time gates for the satellite peak at +-60 ns
+    Parameter satellite_time_cuts;
+    TimeGate satellite_time_cut;
 
     int n_fail_de, n_fail_e, n_fission, n_gamma, n_gamma_fiss, n_cfdfail_labr;
 

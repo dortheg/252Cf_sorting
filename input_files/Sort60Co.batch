@@ -1,0 +1,32 @@
+# Importing the gain shit information.
+Gain file /Applications/preexperiment_240Pu/OfflineOCL/input_files/gain_shift_29_apr_2020.dat
+range /Applications/preexperiment_240Pu/OfflineOCL/zrange_p.dat
+
+
+################ Only when PPACs are used ##################################
+# PPAC time gates
+# time gates of the ppacs are found from the fission blob 
+# in the m_siri_e_t_ppac plot (fission blob in tPPAC vs E_SiRi gate)
+# - time gates from the y-axis, and energy from the x-axis
+# parameter = lower cut of prompt ,     higher gate of prompt peak,  \
+#             lower cut on backgr.,     higher cut backgr.
+
+#REMEMBER TO CHANGE TIME CUTS!
+#parameter ppac_time_cuts = -3 3 \
+#                           40 46 
+############################################################################
+
+# Satellite time gates
+# Events having counts in the satellite peak / junk found around 60-70 ns 
+# can be removed with these time gates
+parameter satellite_time_cuts = 60 70 \
+								-70 -60
+
+
+# Now we will need to read files... There is a lot of the :O
+
+##REMEMBER TO CHANGE TO LABR TRIGGER
+data directory /Applications/preexperiment_240Pu/OfflineOCL/data/60CoUncentered
+data file sirius-20180412-115732.data
+
+export root  /Applications/preexperiment_240Pu/OfflineOCL/output_files/60Co.root
