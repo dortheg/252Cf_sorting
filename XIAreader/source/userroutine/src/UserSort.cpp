@@ -308,10 +308,14 @@ void UserSort::CreateSpectra()
     sprintf(tmp, "time_gamma_gamma_veto_cfdfail_labr_veto_satellite");
     time_gamma_gamma_veto_cfdfail_labr_veto_satellite = Spec(tmp, tmp, 1000, -150, 150, "tdiff [ns]");
 
-
     sprintf(tmp, "time_energy_labr");
     sprintf(tmp2, "t_{LaBr} - t_{PPAC, any} : E_{LaBr}");
-    time_energy_labr = Mat(tmp, tmp2, 2000, -50, 150, "t_{LaBr} - t_{PPAC} [ns]", 2000, 0, 10000, "Energy LaBr [keV]");
+    time_energy_labr = Mat(tmp, tmp2, 4000, -150, 150, "t_{LaBr} - t_{PPAC} [ns]", 2000, 0, 10000, "Energy LaBr [keV]");
+
+    sprintf(tmp, "time_energy_labr_fission_cfdfail");
+    sprintf(tmp2, "t_{LaBr} - t_{dE ANY} : E_{LaBr}, fission");
+    time_energy_labr_fission_cfdfail = Mat(tmp, tmp2, 1000, -200, 200, "t_{LaBr} - t_{DE} [ns]", 1000, 0, 10000, "Energy LaBr [keV]");
+
 
     n_fail_e = 0;
     n_fail_de = 0;
@@ -480,6 +484,10 @@ bool UserSort::Sort(const Event &event)
 
                     labr_align_time->Fill(tdiff_ppac_labr,i);
                     time_energy_labr->Fill(tdiff_ppac_labr,labr_energy);
+
+                    if (event.w_labr[i][j].cfdfail > 0){
+                        time_energy_labr_fission_cfdfail->Fill(tdiff_ppac_labr, labr_energy);
+                    }
 
                     switch ( CheckTimeStatus(tdiff_ppac_labr, ppac_time_cuts) ) {
                         case is_prompt : {

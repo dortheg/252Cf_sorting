@@ -73,7 +73,7 @@ private:
 
     Histogram2Dp energy_labr_all, time_labr_all;
 
-    Histogram2Dp time_energy_labr;
+    Histogram2Dp time_energy_labr, time_energy_labr_fission_cfdfail;
 
     // Particle gated E-DE
     Histogram2Dp ede_gate;
