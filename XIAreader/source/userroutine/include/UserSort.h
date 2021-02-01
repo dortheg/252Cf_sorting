@@ -67,13 +67,11 @@ private:
 
     Histogram1Dp energy_labr_raw[NUM_LABR_DETECTORS], energy_labr[NUM_LABR_DETECTORS], energy_labr_fission, energy_labr_fission_bg, energy_labr_fission_all;
 
-    Histogram1Dp energy_labr_fission_veto_cfdfail_labr, energy_labr_fission_veto_satellite, energy_labr_fission_veto_cfdfail_labr_veto_satellite;
-
-    Histogram1Dp time_gamma_gamma, time_gamma_gamma_veto_cfdfail_labr, time_gamma_gamma_veto_satellite, time_gamma_gamma_veto_cfdfail_labr_veto_satellite;
+    Histogram1Dp time_gamma_gamma;
 
     Histogram2Dp energy_labr_all, time_labr_all;
 
-    Histogram2Dp time_energy_labr, time_energy_labr_fission_cfdfail;
+    Histogram2Dp time_energy_labr, time_energy_labr_fission_cfdfail, time_energy_labr_1332gated;
 
     // Particle gated E-DE
     Histogram2Dp ede_gate;
