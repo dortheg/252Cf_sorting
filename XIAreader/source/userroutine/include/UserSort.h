@@ -65,9 +65,11 @@ private:
     // Method for getting time difference between two words.
     double CalcTimediff(const word_t &start, const word_t &stop) const;
 
-    Histogram1Dp energy_labr_raw[NUM_LABR_DETECTORS], energy_labr[NUM_LABR_DETECTORS], energy_labr_fission, energy_labr_fission_bg, energy_labr_fission_all;
+    Histogram1Dp energy_labr_raw[NUM_LABR_DETECTORS], energy_labr[NUM_LABR_DETECTORS], energy_labr_fission, energy_labr_fission_bg, energy_labr_fission_all, energy_labr_all_px;
 
     Histogram1Dp time_gamma_gamma;
+
+    Histogram1Dp multiplicity_distr, multiplicity_distr_all, multiplicity_distr_bg;
 
     Histogram2Dp energy_labr_all, time_labr_all;
 
@@ -140,12 +142,8 @@ private:
     Parameter ppac_time_cuts;
     TimeGate ppac_time_cut;
 
-    //Time gates for the satellite peak at +-60 ns
-    Parameter satellite_time_cuts;
-    TimeGate satellite_time_cut;
-
     int n_fail_de, n_fail_e, n_gamma, n_gamma_fiss, n_cfdfail_labr;
-    int n_fission, n_fission_veto_cfdfail_labr, n_fission_veto_satellite, n_fission_veto_cfdfail_labr_veto_satellite;
+    int n_fission, n_fission_enter, n_fission_veto_cfdfail_labr;
 
 
 };

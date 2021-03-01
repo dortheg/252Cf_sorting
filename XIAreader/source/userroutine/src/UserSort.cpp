@@ -92,7 +92,6 @@ UserSort::UserSort()
     , thick_range    ( GetParameters(), "thick_range", 2      )
     , labr_time_cuts  ( GetParameters(), "labr_time_cuts", 2*2  )
     , ppac_time_cuts ( GetParameters(), "ppac_time_cuts", 2*2 )
-    , satellite_time_cuts (GetParameters(), "satellite_time_cuts", 2*2)
 {
 }
 
@@ -108,10 +107,6 @@ ppac_time_cut.higher_prompt = ppac_time_cuts[1];
 ppac_time_cut.lower_bg = ppac_time_cuts[2];
 ppac_time_cut.higher_bg = ppac_time_cuts[3];
 
-satellite_time_cut.lower_prompt = satellite_time_cuts[0];
-satellite_time_cut.higher_prompt = satellite_time_cuts[1];
-satellite_time_cut.lower_bg = satellite_time_cuts[2];
-satellite_time_cut.higher_bg = satellite_time_cuts[3];
  }
 
 double UserSort::CalibrateE(const word_t &w) const
@@ -261,6 +256,9 @@ void UserSort::CreateSpectra()
     sprintf(tmp, "energy_labr_all");
     energy_labr_all = Mat(tmp, tmp, 10000, 0, 10000, "Energy [keV]", NUM_LABR_DETECTORS, 0, NUM_LABR_DETECTORS, "LaBr_{3}(Ce) nr.");
 
+    sprintf(tmp, "energy_labr_all_px");
+    energy_labr_all_px = Spec(tmp, tmp, 2000, 0, 10000, "Energy [keV]");
+
     sprintf(tmp, "ppac_align_time");
     sprintf(tmp2, "t_{PPAC} - t_{LaBr nr. 1}");
     ppac_align_time = Mat(tmp, tmp2, 9000, -1500, 1500, "t_{PPAC} - t_{LaBr nr. 1} [ns]", NUM_PPAC, 0, NUM_PPAC, "PPAC id.");
@@ -296,21 +294,28 @@ void UserSort::CreateSpectra()
 
     sprintf(tmp, "time_energy_labr_1332gated");
     sprintf(tmp2, "t_{LaBr} - t_{LaBr_1332} : E_{LaBr}");
-    time_energy_labr_1332gated = Mat(tmp, tmp2, 600, -150, 150, "t_{LaBr} - t_{LaBr_1332} [ns]", 280, 0, 1400, "Energy LaBr [keV]");
+    time_energy_labr_1332gated = Mat(tmp, tmp2, 600, -150, 150, "t_{LaBr} - t_{LaBr_1332} [ns]", 140, 0, 1400, "Energy LaBr [keV]");
 
     sprintf(tmp, "time_energy_labr_fission_cfdfail");
     sprintf(tmp2, "t_{LaBr} - t_{dE ANY} : E_{LaBr}, fission");
     time_energy_labr_fission_cfdfail = Mat(tmp, tmp2, 1000, -200, 200, "t_{LaBr} - t_{DE} [ns]", 1000, 0, 10000, "Energy LaBr [keV]");
 
+    sprintf(tmp, "multiplicity_distr");
+    multiplicity_distr = Spec(tmp, tmp, 11, -0.5, 10.5, "tdiff [ns]");
+
+    sprintf(tmp, "multiplicity_distr_all");
+    multiplicity_distr_all = Spec(tmp, tmp, 11, -0.5, 10.5, "tdiff [ns]");
+
+    sprintf(tmp, "multiplicity_distr_bg");
+    multiplicity_distr_bg = Spec(tmp, tmp, 11, -0.5, 10.5, "tdiff [ns]");
 
     n_fail_e = 0;
     n_fail_de = 0;
     n_cfdfail_labr = 0;
 
     n_fission = 0;
+    n_fission_enter = 0;
     n_fission_veto_cfdfail_labr = 0;
-    n_fission_veto_satellite = 0;
-    n_fission_veto_cfdfail_labr_veto_satellite = 0;
 
     n_gamma = 0;
     n_gamma_fiss = 0;
@@ -326,184 +331,149 @@ bool UserSort::Sort(const Event &event)
 
     NameTimeParameters();
 
-    //Test to see if any of the LaBr in the event are associated with CFDfail; if so, set CFD_fail_labr to true
-    // Will be used later to avoid CFD_fail events
-    bool CFD_fail_labr = false;
-    for ( i = 0 ; i < NUM_LABR_DETECTORS ; ++i ){
-        for ( j = 0 ; j < event.n_labr[i] ; ++j ){
-            n_cfdfail_labr += event.w_labr[i][j].cfdfail;
-            if(event.w_labr[i][j].cfdfail > 0)
-                CFD_fail_labr = true;
-        }
-    }
+//    //Test to see if any of the LaBr in the event are associated with CFDfail; if so, set CFD_fail_labr to true
+//    // Will be used later to avoid CFD_fail events
+//    bool CFD_fail_labr = false;
+//    for ( i = 0 ; i < NUM_LABR_DETECTORS ; ++i ){
+//        for ( j = 0 ; j < event.n_labr[i] ; ++j ){
+//            n_cfdfail_labr += event.w_labr[i][j].cfdfail;
+//            if(event.w_labr[i][j].cfdfail > 0)
+//                CFD_fail_labr = true;
+//        }
+//    }
 
-    ///////////////////////////////////////////////////////////////
-    ///                Gamma-gamma coincidence                  ///
-    ///////////////////////////////////////////////////////////////
+//    //Fill ungated spectra
+//    for ( i = 0 ; i < NUM_LABR_DETECTORS ; ++i ){
+//        for ( j = 0 ; j < event.n_labr[i] ; ++j ){
+//            energy_labr_raw[i]->Fill(event.w_labr[i][j].adcdata);
 
-    //Gate on 1.33 MeV line in 60Co, as know 1.1 MeV arrives in coincidence
-    double energy_one, energy_two;
-    double sigma_1_33 = 30.0;
+//            energy = CalibrateE(event.w_labr[i][j]);
+//            energy_labr[i]->Fill(energy);
+//            energy_labr_all->Fill(energy,i);
+//            energy_labr_all_px->Fill(energy);
+//            n_gamma += 1;
+//        }
+//    }
 
-    for ( i = 0 ; i < NUM_LABR_DETECTORS ; ++i ){
-        for ( j = 0 ; j < event.n_labr[i] ; ++j ){
+//    ///////////////////////////////////////////////////////////////
+//    ///                Gamma-gamma coincidence                  ///
+//    ///////////////////////////////////////////////////////////////
 
-            energy_one = CalibrateE(event.w_labr[i][j]);
+//    //Gate on 1.33 MeV line in 60Co, as know 1.1 MeV arrives in coincidence
+//    double energy_one, energy_two;
+//    double sigma_1_33 = 30.0;
 
-            if(1332 - sigma_1_33 < energy_one && 1332 + sigma_1_33 > energy_one){
+//    for ( i = 0 ; i < NUM_LABR_DETECTORS ; ++i ){
+//        for ( j = 0 ; j < event.n_labr[i] ; ++j ){
 
-                for ( k = 0 ; k < NUM_LABR_DETECTORS ; ++k ){
-                    for ( l = 0 ; l < event.n_labr[k] ; ++l ){
+//            energy_one = CalibrateE(event.w_labr[i][j]);
 
-                        if(k!=i && j!=l){
-                            energy_two = CalibrateE(event.w_labr[k][l]);
-                            tdiff_gamma_gamma = CalcTimediff(event.w_labr[k][l], event.w_labr[i][j]);
-                            time_energy_labr_1332gated->Fill(tdiff_gamma_gamma, energy_two);
-                        }
-                    }
-                }
-            }
-        }
-    }
+//            if(1332 - sigma_1_33 < energy_one && 1332 + sigma_1_33 > energy_one){
 
-    bool satellite_gamma_gamma = false;
+//                for ( k = 0 ; k < NUM_LABR_DETECTORS ; ++k ){
+//                    for ( l = 0 ; l < event.n_labr[k] ; ++l ){
 
-    for ( i = 0 ; i < NUM_LABR_DETECTORS ; ++i ){
-        for ( j = 0 ; j < event.n_labr[i] ; ++j ){
+//                        if(k!=i && j!=l){
+//                            energy_two = CalibrateE(event.w_labr[k][l]);
+//                            tdiff_gamma_gamma = CalcTimediff(event.w_labr[k][l], event.w_labr[i][j]);
+//                            time_energy_labr_1332gated->Fill(tdiff_gamma_gamma, energy_two);
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
 
-            for ( k = 0 ; k < NUM_LABR_DETECTORS ; ++k ){
-                for ( l = 0 ; l < event.n_labr[k] ; ++l ){
 
-                    if(k!=i && j!=l){
+//    for ( i = 0 ; i < NUM_LABR_DETECTORS ; ++i ){
+//        for ( j = 0 ; j < event.n_labr[i] ; ++j ){
 
-                        tdiff_gamma_gamma = CalcTimediff(event.w_labr[k][l], event.w_labr[i][j]);
+//            for ( k = 0 ; k < NUM_LABR_DETECTORS ; ++k ){
+//                for ( l = 0 ; l < event.n_labr[k] ; ++l ){
 
-                        switch ( CheckTimeStatus(tdiff_gamma_gamma, satellite_time_cuts) ) {
-                            case is_prompt: {
-                                satellite_gamma_gamma = true;
-                            }
-                            case is_background: {
-                                satellite_gamma_gamma = true;
-                            }
-                            case ignore :{
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    for ( i = 0 ; i < NUM_LABR_DETECTORS ; ++i ){
-        for ( j = 0 ; j < event.n_labr[i] ; ++j ){
-            energy_labr_raw[i]->Fill(event.w_labr[i][j].adcdata);
-
-            energy = CalibrateE(event.w_labr[i][j]);
-            energy_labr[i]->Fill(energy);
-            energy_labr_all->Fill(energy,i);
-            n_gamma += 1;
-
-            for ( k = 0 ; k < NUM_LABR_DETECTORS ; ++k ){
-                for ( l = 0 ; l < event.n_labr[k] ; ++l ){
-
-                    if(k!=i && j!=l){
-                        energy_2 = CalibrateE(event.w_labr[k][l]);
-                        tdiff_gamma_gamma = CalcTimediff(event.w_labr[k][l], event.w_labr[i][j]);
-                        time_gamma_gamma->Fill(tdiff_gamma_gamma);
-                    }
-                }
-            }
-        }
-    }
+//                    if(k!=i && j!=l){
+//                        energy_2 = CalibrateE(event.w_labr[k][l]);
+//                        tdiff_gamma_gamma = CalcTimediff(event.w_labr[k][l], event.w_labr[i][j]);
+//                        time_gamma_gamma->Fill(tdiff_gamma_gamma);
+//                    }
+//                }
+//            }
+//        }
+//    }
 
     ///////////////////////////////////////////////////////////////
     ///                 PPAC-gamma coincidence                  ///
     ///////////////////////////////////////////////////////////////
 
-//    //Investigate if event has a satellite-gamma
 
-//    bool satellite_ppac_gamma = false;
+    for (int k = 0 ; k < NUM_PPAC ; ++k){
+        for (int l = 0 ; l < event.n_ppac[k] ; ++l){
 
-//    for (int k = 0 ; k < NUM_PPAC ; ++k){
-//        for (int l = 0 ; l < event.n_ppac[k] ; ++l){
+            //Must count number of fissions for the different cases
+            n_fission++;
 
-//            for (i = 0 ; i < NUM_LABR_DETECTORS ; ++i){
-//                for (int j = 0 ; j < event.n_labr[i] ; ++j){
+            int multiplicity = 0;
+            int multiplicity_all = 0;
+            int multiplicity_bg = 0;
 
-//                    tdiff_ppac_labr = CalcTimediff(event.w_ppac[k][l], event.w_labr[i][j]);
+            for (i = 0 ; i < NUM_LABR_DETECTORS ; ++i){
+                for (int j = 0 ; j < event.n_labr[i] ; ++j){
 
-//                    switch ( CheckTimeStatus(tdiff_ppac_labr, satellite_time_cuts) ) {
-//                        case is_prompt: {
-//                            satellite_ppac_gamma = true;
-//                        }
+                    n_fission_enter++;
 
-//                        case is_background: {
-//                            satellite_ppac_gamma = true;
-//                        }
+                    double labr_energy = CalibrateE(event.w_labr[i][j]);
+                    tdiff_ppac_labr = CalcTimediff(event.w_ppac[k][l], event.w_labr[i][j]);
 
-//                        case ignore :{
-//                            break;
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//    }
+                    ppac_align_time->Fill(tdiff_ppac_labr,k);
 
+                    if(k==0)
+                        labr_align_time->Fill(tdiff_ppac_labr,i);
 
-//    for (int k = 0 ; k < NUM_PPAC ; ++k){
-//        for (int l = 0 ; l < event.n_ppac[k] ; ++l){
+                    ppac_align_time->Fill(tdiff_ppac_labr,k);
+                    time_energy_labr->Fill(tdiff_ppac_labr,labr_energy);
 
-//            //Must count number of fissions for the different cases
-//            n_fission++;
+                    //events with CDFfail in owm spectra
+                    if (event.w_labr[i][j].cfdfail > 0){
+                        time_energy_labr_fission_cfdfail->Fill(tdiff_ppac_labr, labr_energy);
+                    }
 
-//            for (i = 0 ; i < NUM_LABR_DETECTORS ; ++i){
-//                for (int j = 0 ; j < event.n_labr[i] ; ++j){
+                    switch ( CheckTimeStatus(tdiff_ppac_labr, ppac_time_cuts) ) {
+                        case is_prompt : {
+                            energy_labr_fission->Fill(labr_energy);
+                            energy_labr_fission_all->Fill(labr_energy);
+                            exgam_ppac->Fill(labr_energy,1000);
+                            exgam_ppac_all->Fill(labr_energy,1000);
+                            n_gamma_fiss +=1;
 
-//                    double labr_energy = CalibrateE(event.w_labr[i][j]);
-//                    tdiff_ppac_labr = CalcTimediff(event.w_ppac[k][l], event.w_labr[i][j]);
+                            multiplicity += 1.0;
+                            multiplicity_all += 1.0;
 
-//                    if(i==0){
-//                        ppac_align_time->Fill(tdiff_ppac_labr,k);
-//                    }
+                            break;
+                        }
 
-//                    labr_align_time->Fill(tdiff_ppac_labr,i);
-//                    time_energy_labr->Fill(tdiff_ppac_labr,labr_energy);
+                        case is_background : {
+                            energy_labr_fission->Fill(labr_energy, -1);
+                            energy_labr_fission_bg->Fill(labr_energy);
+                            exgam_ppac->Fill(labr_energy,1000,-1);
+                            exgam_ppac_bg->Fill(labr_energy,1000);
 
-//                    //events with CDFfail in owm spectra
-//                    if (event.w_labr[i][j].cfdfail > 0){
-//                        time_energy_labr_fission_cfdfail->Fill(tdiff_ppac_labr, labr_energy);
-//                    }
+                            multiplicity += -1.0;
+                            multiplicity_bg += 1.0;
 
-//                    switch ( CheckTimeStatus(tdiff_ppac_labr, ppac_time_cuts) ) {
-//                        case is_prompt : {
-//                            energy_labr_fission->Fill(labr_energy);
-//                            energy_labr_fission_all->Fill(labr_energy);
-//                            exgam_ppac->Fill(labr_energy,1000);
-//                            exgam_ppac_all->Fill(labr_energy,1000);
-//                            n_gamma_fiss +=1;
+                            break;
+                        }
 
-//                            break;
-//                        }
-
-//                        case is_background : {
-//                            energy_labr_fission->Fill(labr_energy, -1);
-//                            energy_labr_fission_bg->Fill(labr_energy);
-//                            exgam_ppac->Fill(labr_energy,1000,-1);
-//                            exgam_ppac_bg->Fill(labr_energy,1000);
-
-//                            break;
-//                        }
-
-//                        case ignore :{
-//                            break;
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//    }
+                        case ignore :{
+                            break;
+                        }
+                    }
+                }
+            }
+            multiplicity_distr->Fill(multiplicity);
+            multiplicity_distr_all->Fill(multiplicity_all);
+            multiplicity_distr_bg->Fill(multiplicity_bg);
+        }
+    }
 
     return true;
 }
@@ -524,6 +494,7 @@ bool UserSort::End()
     std::cout << "CFD fails in dE - detectors: " << n_fail_de << std::endl;
     std::cout << "CFD fails in LaBr: " << n_cfdfail_labr << std::endl;
     std::cout << "n_fission: " << n_fission << std::endl;
+    std::cout << "n_fission_enter: " << n_fission_enter << std::endl;
     std::cout << "ngamma: " << n_gamma << std::endl;
     std::cout << "ngammafiss: " << n_gamma_fiss << std::endl;
     return true;
