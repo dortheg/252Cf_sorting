@@ -65,9 +65,9 @@ private:
     // Method for getting time difference between two words.
     double CalcTimediff(const word_t &start, const word_t &stop) const;
 
-    Histogram1Dp energy_labr_raw[NUM_LABR_DETECTORS], energy_labr[NUM_LABR_DETECTORS], energy_labr_fission, energy_labr_fission_bg, energy_labr_fission_all, energy_labr_all_px;
+    Histogram1Dp energy_labr_raw[NUM_LABR_DETECTORS], energy_labr[NUM_LABR_DETECTORS], energy_labr_fission, energy_labr_fission_bg, energy_labr_fission_all, energy_labr_all_px, energy_labr_fission_LH, energy_labr_fission_RH;
 
-    Histogram1Dp time_gamma_gamma;
+    Histogram1Dp time_gamma_gamma, labr_align_time_RH, labr_align_time_LH;
 
     Histogram1Dp multiplicity_distr, multiplicity_distr_all, multiplicity_distr_bg;
 

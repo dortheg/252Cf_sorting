@@ -37,6 +37,7 @@
 #include <sstream>
 #include <vector>
 #include <fstream>
+#include <algorithm>
 
 //#include <printf.h>
 #include <stdint.h>
@@ -267,6 +268,12 @@ void UserSort::CreateSpectra()
     sprintf(tmp2, "t_{LaBr} - t_{PPAC, any}");
     labr_align_time = Mat(tmp, tmp2, 9000, -1500, 1500, "t_{LaBr} - t_{PPAC, any} [ns]", NUM_LABR_DETECTORS, 0, NUM_LABR_DETECTORS, "LaBr id.");
 
+    sprintf(tmp, "labr_align_time_RH");
+    labr_align_time_RH = Spec(tmp, tmp, 9000, -1500, 1500, "t_{LaBr} - t_{PPAC, any} [ns]");
+
+    sprintf(tmp, "labr_align_time_LH");
+    labr_align_time_LH = Spec(tmp, tmp, 9000, -1500, 1500, "t_{LaBr} - t_{PPAC, any} [ns]");
+
     sprintf(tmp, "exgam_ppac_all");
     exgam_ppac_all = Mat(tmp, tmp, 1500, 0, 15000, "LaBr [keV]", 1100, -1000, 15000, "Ex [keV]");
 
@@ -284,6 +291,12 @@ void UserSort::CreateSpectra()
 
     sprintf(tmp, "energy_labr_fission_all");
     energy_labr_fission_all = Spec(tmp, tmp, 10000, 0, 10000, "Energy [keV]");
+
+    sprintf(tmp, "energy_labr_fission_LH");
+    energy_labr_fission_LH = Spec(tmp, tmp, 10000, 0, 10000, "Energy [keV]");
+
+    sprintf(tmp, "energy_labr_fission_RH");
+    energy_labr_fission_RH = Spec(tmp, tmp, 10000, 0, 10000, "Energy [keV]");
 
     sprintf(tmp, "time_gamma_gamma");
     time_gamma_gamma = Spec(tmp, tmp, 1000, -150, 150, "tdiff [ns]");
@@ -314,7 +327,6 @@ void UserSort::CreateSpectra()
     n_cfdfail_labr = 0;
 
     n_fission = 0;
-    n_fission_enter = 0;
     n_fission_veto_cfdfail_labr = 0;
 
     n_gamma = 0;
@@ -342,18 +354,18 @@ bool UserSort::Sort(const Event &event)
 //        }
 //    }
 
-//    //Fill ungated spectra
-//    for ( i = 0 ; i < NUM_LABR_DETECTORS ; ++i ){
-//        for ( j = 0 ; j < event.n_labr[i] ; ++j ){
-//            energy_labr_raw[i]->Fill(event.w_labr[i][j].adcdata);
+    //Fill ungated spectra
+    for ( i = 0 ; i < NUM_LABR_DETECTORS ; ++i ){
+        for ( j = 0 ; j < event.n_labr[i] ; ++j ){
+            energy_labr_raw[i]->Fill(event.w_labr[i][j].adcdata);
 
-//            energy = CalibrateE(event.w_labr[i][j]);
-//            energy_labr[i]->Fill(energy);
-//            energy_labr_all->Fill(energy,i);
-//            energy_labr_all_px->Fill(energy);
-//            n_gamma += 1;
-//        }
-//    }
+            energy = CalibrateE(event.w_labr[i][j]);
+            energy_labr[i]->Fill(energy);
+            energy_labr_all->Fill(energy,i);
+            energy_labr_all_px->Fill(energy);
+            n_gamma += 1;
+        }
+    }
 
 //    ///////////////////////////////////////////////////////////////
 //    ///                Gamma-gamma coincidence                  ///
@@ -405,7 +417,6 @@ bool UserSort::Sort(const Event &event)
     ///                 PPAC-gamma coincidence                  ///
     ///////////////////////////////////////////////////////////////
 
-
     for (int k = 0 ; k < NUM_PPAC ; ++k){
         for (int l = 0 ; l < event.n_ppac[k] ; ++l){
 
@@ -418,8 +429,6 @@ bool UserSort::Sort(const Event &event)
 
             for (i = 0 ; i < NUM_LABR_DETECTORS ; ++i){
                 for (int j = 0 ; j < event.n_labr[i] ; ++j){
-
-                    n_fission_enter++;
 
                     double labr_energy = CalibrateE(event.w_labr[i][j]);
                     tdiff_ppac_labr = CalcTimediff(event.w_ppac[k][l], event.w_labr[i][j]);
@@ -437,6 +446,23 @@ bool UserSort::Sort(const Event &event)
                         time_energy_labr_fission_cfdfail->Fill(tdiff_ppac_labr, labr_energy);
                     }
 
+                    ///Split OSCAR in left and right halves
+                    int labr_nr = -1;
+                    if(i<=14){
+                        labr_nr = i+1;
+                    }
+                    if(i>=17){
+                        labr_nr = i-1;
+                    }
+
+                    if(labr_nr == 1 || labr_nr == 2 || labr_nr == 5 || labr_nr == 6 || labr_nr == 7|| labr_nr == 8 || labr_nr == 9|| labr_nr == 15|| labr_nr == 16|| labr_nr == 17 ||labr_nr == 18|| labr_nr == 19|| labr_nr == 25 || labr_nr == 26 || labr_nr == 27){
+                        labr_align_time_RH->Fill(tdiff_ppac_labr);
+                    }
+
+                    if(labr_nr == 3 || labr_nr == 4 || labr_nr == 10 || labr_nr == 11 || labr_nr == 12 || labr_nr == 13 || labr_nr == 14 || labr_nr == 20 || labr_nr == 21 || labr_nr == 22 || labr_nr == 23 || labr_nr == 24 || labr_nr == 28 || labr_nr == 29 || labr_nr == 30){
+                        labr_align_time_LH->Fill(tdiff_ppac_labr);
+                    }
+
                     switch ( CheckTimeStatus(tdiff_ppac_labr, ppac_time_cuts) ) {
                         case is_prompt : {
                             energy_labr_fission->Fill(labr_energy);
@@ -447,6 +473,15 @@ bool UserSort::Sort(const Event &event)
 
                             multiplicity += 1.0;
                             multiplicity_all += 1.0;
+
+                            //Split OSCAR in left and right halves
+                            if(labr_nr == 1 || labr_nr == 2 || labr_nr == 5 || labr_nr == 6 || labr_nr == 7|| labr_nr == 8 || labr_nr == 9|| labr_nr == 15|| labr_nr == 16|| labr_nr == 17 ||labr_nr == 18|| labr_nr == 19|| labr_nr == 25 || labr_nr == 26 || labr_nr == 27){
+                                energy_labr_fission_RH->Fill(labr_energy);
+                            }
+
+                            if(labr_nr == 3 || labr_nr == 4 || labr_nr == 10 || labr_nr == 11 || labr_nr == 12 || labr_nr == 13 || labr_nr == 14 || labr_nr == 20 || labr_nr == 21 || labr_nr == 22 || labr_nr == 23 || labr_nr == 24 || labr_nr == 28 || labr_nr == 29 || labr_nr == 30){
+                                energy_labr_fission_LH->Fill(labr_energy);
+                            }
 
                             break;
                         }
@@ -459,6 +494,14 @@ bool UserSort::Sort(const Event &event)
 
                             multiplicity += -1.0;
                             multiplicity_bg += 1.0;
+
+                            if(labr_nr == 1 || labr_nr == 2 || labr_nr == 5 || labr_nr == 6 || labr_nr == 7|| labr_nr == 8 || labr_nr == 9|| labr_nr == 15|| labr_nr == 16|| labr_nr == 17 ||labr_nr == 18|| labr_nr == 19|| labr_nr == 25 || labr_nr == 26 || labr_nr == 27){
+                                energy_labr_fission_RH->Fill(labr_energy, -1);
+                            }
+
+                            if(labr_nr == 3 || labr_nr == 4 || labr_nr == 10 || labr_nr == 11 || labr_nr == 12 || labr_nr == 13 || labr_nr == 14 || labr_nr == 20 || labr_nr == 21 || labr_nr == 22 || labr_nr == 23 || labr_nr == 24 || labr_nr == 28 || labr_nr == 29 || labr_nr == 30){
+                                energy_labr_fission_LH->Fill(labr_energy, -1);
+                            }
 
                             break;
                         }
@@ -494,7 +537,6 @@ bool UserSort::End()
     std::cout << "CFD fails in dE - detectors: " << n_fail_de << std::endl;
     std::cout << "CFD fails in LaBr: " << n_cfdfail_labr << std::endl;
     std::cout << "n_fission: " << n_fission << std::endl;
-    std::cout << "n_fission_enter: " << n_fission_enter << std::endl;
     std::cout << "ngamma: " << n_gamma << std::endl;
     std::cout << "ngammafiss: " << n_gamma_fiss << std::endl;
     return true;
